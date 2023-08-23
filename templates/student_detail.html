@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block content %}
+    <div class="container">
+        <div class="card" style="width: 18rem;">
+            <div class="card-body">
+              <h5 class="card-title">{{ student.name }} {{ student.surname }}</h5>
+              <p class="card-text">{{ student.bio }}</p>
+            </div>
+          </div>
+    </div>
+{% endblock content %}
