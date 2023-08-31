@@ -1,8 +1,10 @@
-from flask import render_template, request
+from flask import render_template, request, flash, redirect, \
+    url_for
 
 from app import app
 from models import Students
 from extensions import db
+from forms import RegisterForm
 
 from sqlalchemy import or_
 
@@ -27,7 +29,6 @@ def students():
                                             student_count=student_count, 
                                             q=q)
     
-
 @app.route("/students/<int:id>")
 def student_detail(id):
     student = db.get_or_404(Students, id)
@@ -36,7 +37,6 @@ def student_detail(id):
     # db.session.commit()
     
     return render_template("student_detail.html", student=student)
-
 
 @app.route("/students/create", methods=['GET', 'POST'])
 def create_student():
@@ -50,13 +50,15 @@ def create_student():
             gender = request.form["gender"],
             status = request.form["status"],
             bio = request.form["bio"],
+            email = request.form["email"],
+            password = request.form["password"],
         )
+        
         student.save()
 
         message = "User is created with successfully!"
 
     return render_template("create_student.html", message = message)
-
 
 @app.route("/students/update/<int:id>", methods=['GET', 'POST'])
 def update_student(id):
@@ -101,7 +103,6 @@ def update_student(id):
 
     return render_template("update_student.html", student=student[0], message=message)
 
-
 @app.route("/students/delete/<int:id>", methods=['GET', 'POST'])
 def delete_student(id):
     # Method 1
@@ -115,3 +116,25 @@ def delete_student(id):
         db.session.commit()
         message = "User with {id} deleted".format(id=id)
     return render_template("delete.html", message=message)
+
+@app.route("/register", methods=["GET", "POST"])
+def register_student():
+    form = RegisterForm()
+    if form.validate_on_submit():
+        student = Students(
+            name = form.name.data,
+            surname = form.surname.data,
+            gender = form.gender.data,
+            status = form.status.data,
+            bio = form.bio.data,
+            email = form.email.data,
+            password = form.password.data,
+        )
+
+        flash("User created with successfully!", "success")
+
+        student.save()
+    else:
+        flash("User is not created", "danger")
+
+    return render_template("register.html", form=form)
