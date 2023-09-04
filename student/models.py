@@ -25,14 +25,3 @@ class Students(db.Model):
     def save(self):
         db.session.add(self)
         db.session.commit()
-
-class Blog(db.Model):
-    
-    __tablename__ = "blog"
-
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(15), nullable=False)
-    text = db.Column(db.Text, nullable=False)
-
-    students_id = db.Column(db.Integer, db.ForeignKey('students.id'))
-    students = db.relationship("Students", backref=backref("students", uselist=False))

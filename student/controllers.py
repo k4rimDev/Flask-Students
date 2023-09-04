@@ -1,18 +1,21 @@
-from flask import render_template, request, flash, redirect, \
-    url_for
+from flask import Blueprint, render_template, request, \
+    session
 
-from app import app
-from models import Students
+student = Blueprint("student", __name__)
+
+from student.models import Students
 from extensions import db
-from forms import RegisterForm
 
 from sqlalchemy import or_
 
 
-@app.route("/students")
+@student.route("/")
 def students():
     student_count:int = None
     q:str = None
+    session["user"] = "Tech"
+    session.permanent = True
+    user = session["user"]
     students = Students.query.order_by(Students.name.desc())
     if request.args.get("q"):
         q = request.args.get("q")
@@ -27,9 +30,9 @@ def students():
         q = q[1:len(q) - 1]
     return render_template("students.html", students=students, 
                                             student_count=student_count, 
-                                            q=q)
+                                            q=q, user=user)
     
-@app.route("/students/<int:id>")
+@student.route("/<int:id>")
 def student_detail(id):
     student = db.get_or_404(Students, id)
     
@@ -38,10 +41,11 @@ def student_detail(id):
     
     return render_template("student_detail.html", student=student)
 
-@app.route("/students/create", methods=['GET', 'POST'])
+@student.route("/create", methods=['GET', 'POST'])
 def create_student():
 
     message: str = None
+    user = session.get("user", None)
 
     if request.method == "POST":
         student = Students(
@@ -58,9 +62,9 @@ def create_student():
 
         message = "User is created with successfully!"
 
-    return render_template("create_student.html", message = message)
+    return render_template("create_student.html", message = message, user=user)
 
-@app.route("/students/update/<int:id>", methods=['GET', 'POST'])
+@student.route("/update/<int:id>", methods=['GET', 'POST'])
 def update_student(id):
     student = Students.query.filter_by(id=id)
     message: str = None
@@ -103,7 +107,7 @@ def update_student(id):
 
     return render_template("update_student.html", student=student[0], message=message)
 
-@app.route("/students/delete/<int:id>", methods=['GET', 'POST'])
+@student.route("/delete/<int:id>", methods=['GET', 'POST'])
 def delete_student(id):
     # Method 1
     # db.session.delete(student)
@@ -116,25 +120,3 @@ def delete_student(id):
         db.session.commit()
         message = "User with {id} deleted".format(id=id)
     return render_template("delete.html", message=message)
-
-@app.route("/register", methods=["GET", "POST"])
-def register_student():
-    form = RegisterForm()
-    if form.validate_on_submit():
-        student = Students(
-            name = form.name.data,
-            surname = form.surname.data,
-            gender = form.gender.data,
-            status = form.status.data,
-            bio = form.bio.data,
-            email = form.email.data,
-            password = form.password.data,
-        )
-
-        flash("User created with successfully!", "success")
-
-        student.save()
-    else:
-        flash("User is not created", "danger")
-
-    return render_template("register.html", form=form)
